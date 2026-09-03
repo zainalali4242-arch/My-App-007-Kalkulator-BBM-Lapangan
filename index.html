@@ -1736,22 +1736,35 @@ function updateBackupSummary(){
 $('bkDari').oninput=updateBackupSummary; $('bkSampai').oninput=updateBackupSummary; $('bkTangki').onchange=updateBackupSummary;
 
 function slugify(s){ return String(s||'').normalize('NFKD').replace(/[^\w]+/g,''); }
+function friendlyDate(iso){
+  if(!iso)return '';
+  const d=new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}).replace(/\./g,'');
+}
 function buildBackupFilename(prefix, ext, f){
-  const parts=[prefix];
   const allJenis=[...new Set(S.hist.map(h=>h.jenis))];
+  let jenisLabel;
   if(f.jenisChecked.length && f.jenisChecked.length<allJenis.length){
-    parts.push(f.jenisChecked.length===1?slugify(f.jenisChecked[0]):'Campuran');
+    jenisLabel = f.jenisChecked.length===1 ? f.jenisChecked[0] : f.jenisChecked.join(' dan ');
+  }else{
+    jenisLabel = (prefix==='Rekap') ? 'Rekap BBM' : 'Laporan BBM';
   }
-  if(f.tangki)parts.push(slugify(f.tangki));
-  if(f.dari||f.sampai)parts.push((f.dari||'Awal').replace(/-/g,'')+'-'+(f.sampai||'Now').replace(/-/g,''));
-  else if(f.list.length){
-    const tglAwal=dateOnly(f.list[0].ts).replace(/-/g,''), tglAkhir=dateOnly(f.list[f.list.length-1].ts).replace(/-/g,'');
-    parts.push(tglAwal===tglAkhir?tglAwal:(tglAwal+'-'+tglAkhir));
+  let tgl;
+  if(f.dari||f.sampai){
+    const a=friendlyDate(f.dari), b=friendlyDate(f.sampai);
+    tgl = a && b && a!==b ? (a+'-'+b) : (a||b);
+  }else if(f.list.length){
+    const a=dateOnly(f.list[0].ts), b=dateOnly(f.list[f.list.length-1].ts);
+    tgl = a===b ? friendlyDate(a) : (friendlyDate(a)+'-'+friendlyDate(b));
+  }else{
+    tgl = friendlyDate(dateOnly(Date.now()));
   }
+  let name = jenisLabel+' '+tgl;
+  if(f.tangki)name += ' - '+f.tangki;
   const now=new Date();
-  const kodePembeda=dateOnly(now.getTime()).replace(/-/g,'')+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0')+String(now.getSeconds()).padStart(2,'0');
-  parts.push(kodePembeda);
-  return parts.join('_')+'.'+ext;
+  name += ' ('+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0')+')';
+  name = name.replace(/[\/\\:\*\?"<>\|]/g,'-');
+  return name+'.'+ext;
 }
 
 function cetakLaporanLengkap(){
