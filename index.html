@@ -1742,10 +1742,9 @@ function friendlyDate(iso){
   return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}).replace(/\./g,'');
 }
 function buildBackupFilename(prefix, ext, f){
-  const allJenis=[...new Set(S.hist.map(h=>h.jenis))];
   let jenisLabel;
-  if(f.jenisChecked.length && f.jenisChecked.length<allJenis.length){
-    jenisLabel = f.jenisChecked.length===1 ? f.jenisChecked[0] : f.jenisChecked.join(' dan ');
+  if(f.jenisChecked.length===1){
+    jenisLabel = f.jenisChecked[0];
   }else{
     jenisLabel = (prefix==='Rekap') ? 'Rekap BBM' : 'Laporan BBM';
   }
